@@ -382,3 +382,11 @@ bool FileUtils::fileIsText(const std::string &p_path)
    line = buffer;
    return (line.substr(0, 4) == "text" && line.find("charset=us-ascii") != std::string::npos);
 }
+
+// Run command with param p_path
+bool FileUtils::runCommand(const std::string &cmd, const std::string &args, const std::string &p_path){
+	if (args == "")
+		return Run(cmd, p_path);
+	else
+		return Run(cmd, args, p_path);
+}

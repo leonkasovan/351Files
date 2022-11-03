@@ -324,14 +324,71 @@ void MainWindow::openHighlightedFile(void) {
 		stat(filePath.c_str(), &sfile); //stat system call
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
 		strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
-        l_dialog.addOption("Close", 0, g_iconSelect);
-        l_dialog.execute();
+		l_dialog.addLabel(" ");
+		if (m_fileLister[m_cursor].m_ext == "tar") {
+			l_dialog.addOption("Extract", 1, g_iconNewDir);
+		}
+		if (m_fileLister[m_cursor].m_ext == "gz") {
+			l_dialog.addOption("Extract", 2, g_iconNewDir);
+		}
+		if (m_fileLister[m_cursor].m_ext == "zip") {
+			l_dialog.addOption("Extract", 3, g_iconNewDir);
+		}
+		if (m_fileLister[m_cursor].m_ext == "7z") {
+			l_dialog.addOption("Extract", 4, g_iconNewDir);
+		}
+		if (m_fileLister[m_cursor].m_ext == "xz") {
+			l_dialog.addOption("Extract", 5, g_iconNewDir);
+		}
+		if (m_fileLister[m_cursor].m_ext == "deb") {
+			l_dialog.addOption("Install to [bin],[lib]", 6, g_iconDisk);
+		}
+		if (m_fileLister[m_cursor].m_ext == "deb") {
+			l_dialog.addOption("Extract", 7, g_iconNewDir);
+		}
+		if (m_fileLister[m_cursor].m_ext == "tar") {
+			l_dialog.addOption("View contents", 8, g_iconFile);
+		}
+        l_dialog.addOption("Close", 0, g_iconCancel);
+        int action = l_dialog.execute();
+		
+		if (action == 1){
+			FileUtils::runCommand("tar", "xf", filePath);
+		}else if (action == 2){
+			FileUtils::runCommand("gzip", "-d", filePath);
+		}else if (action == 3){
+			FileUtils::runCommand("unzip", "-d", filePath);
+		}else if (action == 4){
+			FileUtils::runCommand("7unz", "", filePath);
+		}else if (action == 5){
+			FileUtils::runCommand("unxz", "", filePath);
+		}else if (action == 6){
+			FileUtils::runCommand("ar", "x", filePath+" data.tar.xz");
+			FileUtils::runCommand("unxz", "", "data.tar.xz");
+			FileUtils::runCommand("tar", "xf", "data.tar");
+			FileUtils::runCommand("rm", "", "data.tar");
+			//move file to [bin][lib] with rules
+		}else if (action == 7){
+			FileUtils::runCommand("ar", "x", filePath+" data.tar.xz");
+			FileUtils::runCommand("unxz", "", "data.tar.xz");
+			FileUtils::runCommand("tar", "xf", "data.tar");
+			FileUtils::runCommand("rm", "", "data.tar");
+		}else if (action == 8){
+			FileUtils::runCommand("tar", "tf > tmp.txt", filePath);
+			//load tmp.txt to dialog.labels
+		}
         return;
     }
 
     // Dialog 'view as text' / 'edit as text'
     int action = -1; {
         Dialog l_dialog("Open:");
+		char tbuf[2000];
+		struct stat sfile; //pointer to stat struct
+		stat(filePath.c_str(), &sfile); //stat system call
+		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
+		strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
+		l_dialog.addLabel(" ");
         l_dialog.addOption("View as text", 0, g_iconFileText);
         l_dialog.addOption("Edit as text", 1, g_iconEdit);
         l_dialog.addOption("Cancel", 2, g_iconCancel);
