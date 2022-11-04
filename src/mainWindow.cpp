@@ -12,6 +12,7 @@
 #include "imageViewer.h"
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 // Destructor
 MainWindow::~MainWindow(void) {}
@@ -272,6 +273,8 @@ void MainWindow::openHighlightedDir(void) {
     adjustScrollbar();
     // New render
     g_hasChanged = true;
+	// tambahkan chdir
+	chdir(l_newDir.c_str());
     INHIBIT(std::cout << "Path: " << m_title << " (" << m_nbItems << ") items\n";)
 }
 
@@ -302,7 +305,6 @@ void MainWindow::openHighlightedFile(void) {
 		}
 		while (fgets(result, sizeof(result), pipe) != NULL);
 		pclose(pipe);
-		
 		len = 0;
 		start = p = result;
 		while(*p){
@@ -318,12 +320,17 @@ void MainWindow::openHighlightedFile(void) {
 			len++;
 			p++;
 		}
+		p--;
+		if (*p == '\n'){
+			*p = 0;
+			l_dialog.addLabel(start);
+		}
 
 		char tbuf[2000];
 		struct stat sfile; //pointer to stat struct
 		stat(filePath.c_str(), &sfile); //stat system call
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
-		strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
+		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
 		if (m_fileLister[m_cursor].m_ext == "tar") {
 			l_dialog.addOption("Extract", 1, g_iconNewDir);
@@ -349,6 +356,9 @@ void MainWindow::openHighlightedFile(void) {
 		if (m_fileLister[m_cursor].m_ext == "tar") {
 			l_dialog.addOption("View contents", 8, g_iconFile);
 		}
+		if (m_fileLister[m_cursor].m_ext == "deb") {
+			l_dialog.addOption("View contents", 12, g_iconFile);
+		}
         l_dialog.addOption("Close", 0, g_iconCancel);
         int action = l_dialog.execute();
 		
@@ -369,14 +379,38 @@ void MainWindow::openHighlightedFile(void) {
 			FileUtils::runCommand("rm", "", "data.tar");
 			//move file to [bin][lib] with rules
 		}else if (action == 7){
-			FileUtils::runCommand("ar", "x", filePath+" data.tar.xz");
-			FileUtils::runCommand("unxz", "", "data.tar.xz");
-			FileUtils::runCommand("tar", "xf", "data.tar");
-			FileUtils::runCommand("rm", "", "data.tar");
+			std::string cmd = "ar x "+filePath+" data.tar.xz";
+			system(cmd.c_str());
+			system("unxz data.tar.xz && tar xf data.tar && rm data.tar");
 		}else if (action == 8){
-			FileUtils::runCommand("tar", "tf > tmp.txt", filePath);
-			//load tmp.txt to dialog.labels
+			std::string cmd = "tar tf "+filePath+" >contents.tar.txt";
+			int rc = system(cmd.c_str());
+			if (!rc){
+				TextViewer textViewer("contents.tar.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "", "contents.tar.txt");
+			}else{
+				Dialog l_dialog("Warning:");
+				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 12){
+			std::string cmd = "ar x "+filePath+" data.tar.xz";
+			system(cmd.c_str());
+			int rc = system("unxz data.tar.xz && tar tf data.tar >contents.deb.txt && rm data.tar");
+			if (!rc){
+				TextViewer textViewer("contents.deb.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "", "contents.deb.txt");
+			}else{
+				Dialog l_dialog("Warning:");
+				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
 		}
+		refresh();
         return;
     }
 

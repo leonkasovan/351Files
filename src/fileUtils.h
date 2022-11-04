@@ -57,7 +57,6 @@ namespace FileUtils
 
    // Run command with args for p_path
    bool runCommand(const std::string &cmd, const std::string &args, const std::string &p_path);
-
 }
 
 #endif
