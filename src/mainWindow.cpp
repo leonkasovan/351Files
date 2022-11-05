@@ -372,7 +372,7 @@ void MainWindow::openHighlightedFile(void) {
 			FileUtils::runCommand("7unz", "", filePath);
 		}else if (action == 5){
 			FileUtils::runCommand("unxz", "", filePath);
-		}else if (action == 6){
+		}else if (action == 6){	//Install deb file into [bin][lib]
 			chdir("/tmp");
 			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar tf data.tar >contents.tar.txt && mkdir -p tmp_tar && tar xf data.tar -Ctmp_tar";
 			system(cmd.c_str());
@@ -417,11 +417,16 @@ void MainWindow::openHighlightedFile(void) {
 			FileUtils::runCommand("rm", "contents.tar.txt");
 			FileUtils::runCommand("rm", "-r", "tmp_tar");
 			chdir(m_title.c_str());
-		}else if (action == 7){
-			std::string cmd = "ar x "+filePath+" data.tar.xz";
-			system(cmd.c_str());
-			system("unxz data.tar.xz && tar xf data.tar && rm data.tar");
-		}else if (action == 8){
+		}else if (action == 7){	// Extract deb file
+			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar xf data.tar && rm data.tar";
+			int rc = system(cmd.c_str());
+			if (rc){
+				Dialog l_dialog("Error:");
+				l_dialog.addLabel("Can't extract deb file.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 8){		// View tar contents
 			std::string cmd = "tar tf "+filePath+" >contents.tar.txt";
 			int rc = system(cmd.c_str());
 			if (!rc){
@@ -434,14 +439,13 @@ void MainWindow::openHighlightedFile(void) {
 				l_dialog.addOption("Close", 1, g_iconCancel);
 				l_dialog.execute();
 			}
-		}else if (action == 12){
-			std::string cmd = "ar x "+filePath+" data.tar.xz";
-			system(cmd.c_str());
-			int rc = system("unxz data.tar.xz && tar tf data.tar >contents.tar.txt && rm data.tar");
+		}else if (action == 12){	// View deb contents
+			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar tf data.tar >contents.deb.txt && rm data.tar";
+			int rc = system(cmd.c_str());
 			if (!rc){
-				TextViewer textViewer("contents.tar.txt");
+				TextViewer textViewer("contents.deb.txt");
 				textViewer.execute();
-				FileUtils::runCommand("rm", "contents.tar.txt");
+				FileUtils::runCommand("rm", "contents.deb.txt");
 			}else{
 				Dialog l_dialog("Warning:");
 				l_dialog.addLabel("Content can not be viewed.");
