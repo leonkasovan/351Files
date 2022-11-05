@@ -332,114 +332,29 @@ void MainWindow::openHighlightedFile(void) {
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
 		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
-		if (m_fileLister[m_cursor].m_ext == "tar") {
-			l_dialog.addOption("View contents", 8, g_iconFile);
-		}
-		if (m_fileLister[m_cursor].m_ext == "tar") {
-			l_dialog.addOption("Extract", 1, g_iconNewDir);
-		}
-		if (m_fileLister[m_cursor].m_ext == "gz") {
-			l_dialog.addOption("Extract", 2, g_iconNewDir);
-		}
-		if (m_fileLister[m_cursor].m_ext == "zip") {
-			l_dialog.addOption("Extract", 3, g_iconNewDir);
-		}
-		if (m_fileLister[m_cursor].m_ext == "7z") {
-			l_dialog.addOption("Extract", 4, g_iconNewDir);
-		}
-		if (m_fileLister[m_cursor].m_ext == "xz") {
-			l_dialog.addOption("Extract", 5, g_iconNewDir);
-		}
-		if (m_fileLister[m_cursor].m_ext == "deb") {
-			l_dialog.addOption("View contents", 12, g_iconFile);
-		}
-		if (m_fileLister[m_cursor].m_ext == "deb") {
-			l_dialog.addOption("Install", 6, g_iconDisk);
-		}
-		if (m_fileLister[m_cursor].m_ext == "deb") {
-			l_dialog.addOption("Extract", 7, g_iconNewDir);
-		}
+		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("View contents", 1, g_iconFile); }
+		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("Install", 2, g_iconDisk); }
+		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("Extract", 3, g_iconNewDir); }
+		
+		if (m_fileLister[m_cursor].m_ext == "zip") { l_dialog.addOption("View contents", 4, g_iconFile); }
+		if (m_fileLister[m_cursor].m_ext == "zip") { l_dialog.addOption("Extract", 5, g_iconNewDir); }
+		
+		if (m_fileLister[m_cursor].m_ext == "tar") { l_dialog.addOption("View contents", 6, g_iconFile); }
+		if (m_fileLister[m_cursor].m_ext == "tar") { l_dialog.addOption("Extract", 7, g_iconNewDir); }
+		
+		if (m_fileLister[m_cursor].m_ext == "7z") { l_dialog.addOption("View contents", 8, g_iconFile); }
+		if (m_fileLister[m_cursor].m_ext == "7z") { l_dialog.addOption("Extract", 9, g_iconNewDir); }
+		
+		if (m_fileLister[m_cursor].m_ext == "gz") { l_dialog.addOption("Extract and keep", 10, g_iconNewDir); }
+		if (m_fileLister[m_cursor].m_ext == "gz") { l_dialog.addOption("Extract and delete", 11, g_iconNewDir); }
+		
+		if (m_fileLister[m_cursor].m_ext == "xz") { l_dialog.addOption("Extract and keep", 12, g_iconNewDir); }
+		if (m_fileLister[m_cursor].m_ext == "xz") { l_dialog.addOption("Extract and delete", 13, g_iconNewDir); }
+		
         l_dialog.addOption("Close", 0, g_iconCancel);
         int action = l_dialog.execute();
 		
-		if (action == 1){
-			FileUtils::runCommand("tar", "xf", filePath);
-		}else if (action == 2){
-			FileUtils::runCommand("gzip", "-d", filePath);
-		}else if (action == 3){
-			FileUtils::runCommand("unzip", "-d", filePath);
-		}else if (action == 4){
-			FileUtils::runCommand("7unz", "", filePath);
-		}else if (action == 5){
-			FileUtils::runCommand("unxz", "", filePath);
-		}else if (action == 6){	//Install deb file into [bin][lib]
-			chdir("/tmp");
-			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar tf data.tar >contents.tar.txt && mkdir -p tmp_tar && tar xf data.tar -Ctmp_tar";
-			system(cmd.c_str());
-			FileUtils::runCommand("rm", "data.tar");
-			FILE* file = fopen("contents.tar.txt", "r");
-			char content_path[1024];
-			char target_path[1024];
-			int nbin = 0, nlib = 0;
-			Dialog l_dialog("Installed:");
-			chdir("tmp_tar");
-			while (fgets(content_path, sizeof(content_path), file)) {
-				if (strstr(content_path, "./usr/lib/aarch64-linux-gnu/")){
-					char *filename;
-					filename = strrchr(content_path, '\n'); *filename = 0;	//fix last newline, borrow var [filename]
-					filename = strrchr(content_path, '/'); filename++;	//skip / to get its filename
-					if (isalnum(*filename)){
-						sprintf(target_path, "/storage/usr/lib/%s", filename);
-						FileUtils::runCommand("mv", content_path, target_path);	// work only on ext4
-						// FileUtils::runCommand("cp", content_path, target_path);	//work on vfat and ext4
-						nlib++;
-						l_dialog.addLabel(target_path);
-					}
-				}else if (strstr(content_path, "./usr/bin/")){
-					char *filename;
-					filename = strrchr(content_path, '\n'); *filename = 0;	//fix last newline, borrow var [filename]
-					filename = strrchr(content_path, '/'); filename++;
-					if (isalnum(*filename)){
-						sprintf(target_path, "/storage/usr/bin/%s", filename);
-						FileUtils::runCommand("mv", content_path, target_path);	// work only on ext4
-						// FileUtils::runCommand("cp", content_path, target_path); //work on vfat and ext4
-						nbin++;
-						l_dialog.addLabel(target_path);
-					}
-				}
-			}
-			fclose(file);
-			sprintf(target_path, "Total: %d[lib] %d[bin]", nlib, nbin);	//borrow var [target_path]
-			l_dialog.addLabel(target_path);
-			l_dialog.addOption("Close", 1, g_iconSelect);
-			l_dialog.execute();
-			chdir("..");
-			FileUtils::runCommand("rm", "contents.tar.txt");
-			FileUtils::runCommand("rm", "-r", "tmp_tar");
-			chdir(m_title.c_str());
-		}else if (action == 7){	// Extract deb file
-			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar xf data.tar && rm data.tar";
-			int rc = system(cmd.c_str());
-			if (rc){
-				Dialog l_dialog("Error:");
-				l_dialog.addLabel("Can't extract deb file.");
-				l_dialog.addOption("Close", 1, g_iconCancel);
-				l_dialog.execute();
-			}
-		}else if (action == 8){		// View tar contents
-			std::string cmd = "tar tf "+filePath+" >contents.tar.txt";
-			int rc = system(cmd.c_str());
-			if (!rc){
-				TextViewer textViewer("contents.tar.txt");
-				textViewer.execute();
-				FileUtils::runCommand("rm", "contents.tar.txt");
-			}else{
-				Dialog l_dialog("Warning:");
-				l_dialog.addLabel("Content can not be viewed.");
-				l_dialog.addOption("Close", 1, g_iconCancel);
-				l_dialog.execute();
-			}
-		}else if (action == 12){	// View deb contents
+		if (action == 1){ // View deb contents
 			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar tf data.tar >contents.deb.txt && rm data.tar";
 			int rc = system(cmd.c_str());
 			if (!rc){
@@ -452,6 +367,88 @@ void MainWindow::openHighlightedFile(void) {
 				l_dialog.addOption("Close", 1, g_iconCancel);
 				l_dialog.execute();
 			}
+		}else if (action == 2){	//Install deb file into [bin][lib]
+			std::string cmd = "cd /tmp && ar x "+filePath+" data.tar.xz && unxz data.tar.xz && mkdir -p tmp_tar && tar xf data.tar -Ctmp_tar && rm data.tar && cd tmp_tar" 
+			+ " && if [[ -d usr/lib/aarch64-linux-gnu ]]; then rsync -a usr/lib/aarch64-linux-gnu/ /storage/usr/lib/; fi"
+			+ " && if [[ -d usr/bin ]]; then rsync -a usr/bin/ /storage/usr/bin/; fi"
+			+ " && if [[ -d lib/aarch64-linux-gnu ]]; then rsync -a lib/aarch64-linux-gnu/ /storage/lib/; fi"
+			+ " && if [[ -d bin ]]; then rsync -a bin/ /storage/bin/; fi"
+			+ " && cd .. && rm -r tmp_tar";
+			int rc = system(cmd.c_str());
+			if (rc){
+				Dialog l_dialog("Error:");
+				l_dialog.addLabel("Can't install deb file.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}else{
+				Dialog l_dialog("Info:");
+				l_dialog.addLabel("Successfully install deb to [lib]/[bin]");
+				l_dialog.addOption("Close", 1, g_iconSelect);
+				l_dialog.execute();
+			}
+			chdir(m_title.c_str());
+		}else if (action == 3){	// Extract deb file
+			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar xf data.tar && rm data.tar";
+			int rc = system(cmd.c_str());
+			if (rc){
+				Dialog l_dialog("Error:");
+				l_dialog.addLabel("Can't extract deb file.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 4){	// View zip contents
+			std::string cmd = "unzip -l "+filePath+" >contents.zip.txt";
+			int rc = system(cmd.c_str());
+			if (!rc){
+				TextViewer textViewer("contents.zip.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "contents.zip.txt");
+			}else{
+				Dialog l_dialog("Warning:");
+				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 5){ //	Extract zip file
+			FileUtils::runCommand("unzip", filePath);
+		}else if (action == 6){	//	View tar contents
+			std::string cmd = "tar tf "+filePath+" >contents.tar.txt";
+			int rc = system(cmd.c_str());
+			if (!rc){
+				TextViewer textViewer("contents.tar.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "contents.tar.txt");
+			}else{
+				Dialog l_dialog("Warning:");
+				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 7){	// Extract tar file
+			FileUtils::runCommand("tar", "xf", filePath);
+		}else if (action == 8){	// View 7z contents
+			std::string cmd = "7zr l "+filePath+" >contents.7z.txt";
+			int rc = system(cmd.c_str());
+			if (!rc){
+				TextViewer textViewer("contents.7z.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "contents.7z.txt");
+			}else{
+				Dialog l_dialog("Warning:");
+				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 9){	// Extract 7z file
+			FileUtils::runCommand("7zr", "x", filePath);
+		}else if (action == 10){	// Extract and keep gz file
+			FileUtils::runCommand("gzip", "-dk", filePath);
+		}else if (action == 11){	// Extract and delete gz file
+			FileUtils::runCommand("gzip", "-d", filePath);
+		}else if (action == 10){	// Extract and keep xz file
+			FileUtils::runCommand("unxz", "-dk", filePath);
+		}else if (action == 11){	// Extract and delete xz file
+			FileUtils::runCommand("unxz", filePath);
 		}
 		refresh();
         return;
@@ -464,7 +461,7 @@ void MainWindow::openHighlightedFile(void) {
 		struct stat sfile; //pointer to stat struct
 		stat(filePath.c_str(), &sfile); //stat system call
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
-		strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
+		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
         l_dialog.addOption("View as text", 0, g_iconFileText);
         l_dialog.addOption("Edit as text", 1, g_iconEdit);
