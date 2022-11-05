@@ -56,7 +56,10 @@ namespace FileUtils
    void toLower(std::string &s);
 
    // Run command with args for p_path
-   bool runCommand(const std::string &cmd, const std::string &args, const std::string &p_path);
+   bool runCommand(const std::string &cmd);
+   bool runCommand(const std::string &cmd, const std::string &args1);
+   bool runCommand(const std::string &cmd, const std::string &args1, const std::string &args2);
+   bool runCommand(const std::string &cmd, const std::string &args1, const std::string &args2, const std::string &args3);
 }
 
 #endif

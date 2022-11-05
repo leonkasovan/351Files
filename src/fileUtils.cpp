@@ -383,10 +383,16 @@ bool FileUtils::fileIsText(const std::string &p_path)
    return (line.substr(0, 4) == "text" && line.find("charset=us-ascii") != std::string::npos);
 }
 
-// Run command with param p_path
-bool FileUtils::runCommand(const std::string &cmd, const std::string &args, const std::string &p_path){
-	if (args == "")
-		return Run(cmd, p_path);
-	else
-		return Run(cmd, args, p_path);
+// Run command with or no args
+bool FileUtils::runCommand(const std::string &cmd){
+	return Run(cmd);
+}
+bool FileUtils::runCommand(const std::string &cmd, const std::string &args1){
+	return Run(cmd, args1);
+}
+bool FileUtils::runCommand(const std::string &cmd, const std::string &args1, const std::string &args2){
+	return Run(cmd, args1, args2);
+}
+bool FileUtils::runCommand(const std::string &cmd, const std::string &args1, const std::string &args2, const std::string &args3){
+	return Run(cmd, args1, args2, args3);
 }

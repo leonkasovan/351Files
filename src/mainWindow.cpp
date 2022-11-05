@@ -333,6 +333,9 @@ void MainWindow::openHighlightedFile(void) {
 		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
 		if (m_fileLister[m_cursor].m_ext == "tar") {
+			l_dialog.addOption("View contents", 8, g_iconFile);
+		}
+		if (m_fileLister[m_cursor].m_ext == "tar") {
 			l_dialog.addOption("Extract", 1, g_iconNewDir);
 		}
 		if (m_fileLister[m_cursor].m_ext == "gz") {
@@ -348,16 +351,13 @@ void MainWindow::openHighlightedFile(void) {
 			l_dialog.addOption("Extract", 5, g_iconNewDir);
 		}
 		if (m_fileLister[m_cursor].m_ext == "deb") {
-			l_dialog.addOption("Install to [bin],[lib]", 6, g_iconDisk);
+			l_dialog.addOption("View contents", 12, g_iconFile);
+		}
+		if (m_fileLister[m_cursor].m_ext == "deb") {
+			l_dialog.addOption("Install", 6, g_iconDisk);
 		}
 		if (m_fileLister[m_cursor].m_ext == "deb") {
 			l_dialog.addOption("Extract", 7, g_iconNewDir);
-		}
-		if (m_fileLister[m_cursor].m_ext == "tar") {
-			l_dialog.addOption("View contents", 8, g_iconFile);
-		}
-		if (m_fileLister[m_cursor].m_ext == "deb") {
-			l_dialog.addOption("View contents", 12, g_iconFile);
 		}
         l_dialog.addOption("Close", 0, g_iconCancel);
         int action = l_dialog.execute();
@@ -373,11 +373,50 @@ void MainWindow::openHighlightedFile(void) {
 		}else if (action == 5){
 			FileUtils::runCommand("unxz", "", filePath);
 		}else if (action == 6){
-			FileUtils::runCommand("ar", "x", filePath+" data.tar.xz");
-			FileUtils::runCommand("unxz", "", "data.tar.xz");
-			FileUtils::runCommand("tar", "xf", "data.tar");
-			FileUtils::runCommand("rm", "", "data.tar");
-			//move file to [bin][lib] with rules
+			chdir("/tmp");
+			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar tf data.tar >contents.tar.txt && mkdir -p tmp_tar && tar xf data.tar -Ctmp_tar";
+			system(cmd.c_str());
+			FileUtils::runCommand("rm", "data.tar");
+			FILE* file = fopen("contents.tar.txt", "r");
+			char content_path[1024];
+			char target_path[1024];
+			int nbin = 0, nlib = 0;
+			Dialog l_dialog("Installed:");
+			chdir("tmp_tar");
+			while (fgets(content_path, sizeof(content_path), file)) {
+				if (strstr(content_path, "./usr/lib/aarch64-linux-gnu/")){
+					char *filename;
+					filename = strrchr(content_path, '\n'); *filename = 0;	//fix last newline, borrow var [filename]
+					filename = strrchr(content_path, '/'); filename++;	//skip / to get its filename
+					if (isalnum(*filename)){
+						sprintf(target_path, "/storage/usr/lib/%s", filename);
+						FileUtils::runCommand("mv", content_path, target_path);	// work only on ext4
+						// FileUtils::runCommand("cp", content_path, target_path);	//work on vfat and ext4
+						nlib++;
+						l_dialog.addLabel(target_path);
+					}
+				}else if (strstr(content_path, "./usr/bin/")){
+					char *filename;
+					filename = strrchr(content_path, '\n'); *filename = 0;	//fix last newline, borrow var [filename]
+					filename = strrchr(content_path, '/'); filename++;
+					if (isalnum(*filename)){
+						sprintf(target_path, "/storage/usr/bin/%s", filename);
+						FileUtils::runCommand("mv", content_path, target_path);	// work only on ext4
+						// FileUtils::runCommand("cp", content_path, target_path); //work on vfat and ext4
+						nbin++;
+						l_dialog.addLabel(target_path);
+					}
+				}
+			}
+			fclose(file);
+			sprintf(target_path, "Total: %d[lib] %d[bin]", nlib, nbin);	//borrow var [target_path]
+			l_dialog.addLabel(target_path);
+			l_dialog.addOption("Close", 1, g_iconSelect);
+			l_dialog.execute();
+			chdir("..");
+			FileUtils::runCommand("rm", "contents.tar.txt");
+			FileUtils::runCommand("rm", "-r", "tmp_tar");
+			chdir(m_title.c_str());
 		}else if (action == 7){
 			std::string cmd = "ar x "+filePath+" data.tar.xz";
 			system(cmd.c_str());
@@ -388,7 +427,7 @@ void MainWindow::openHighlightedFile(void) {
 			if (!rc){
 				TextViewer textViewer("contents.tar.txt");
 				textViewer.execute();
-				FileUtils::runCommand("rm", "", "contents.tar.txt");
+				FileUtils::runCommand("rm", "contents.tar.txt");
 			}else{
 				Dialog l_dialog("Warning:");
 				l_dialog.addLabel("Content can not be viewed.");
@@ -398,11 +437,11 @@ void MainWindow::openHighlightedFile(void) {
 		}else if (action == 12){
 			std::string cmd = "ar x "+filePath+" data.tar.xz";
 			system(cmd.c_str());
-			int rc = system("unxz data.tar.xz && tar tf data.tar >contents.deb.txt && rm data.tar");
+			int rc = system("unxz data.tar.xz && tar tf data.tar >contents.tar.txt && rm data.tar");
 			if (!rc){
-				TextViewer textViewer("contents.deb.txt");
+				TextViewer textViewer("contents.tar.txt");
 				textViewer.execute();
-				FileUtils::runCommand("rm", "", "contents.deb.txt");
+				FileUtils::runCommand("rm", "contents.tar.txt");
 			}else{
 				Dialog l_dialog("Warning:");
 				l_dialog.addLabel("Content can not be viewed.");
