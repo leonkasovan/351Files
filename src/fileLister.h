@@ -15,6 +15,7 @@ struct T_FILE
         m_name(""),
         m_ext(""),
         m_size(0),
+		m_symlink(false),
         m_selected(false)
     {}
 
@@ -23,9 +24,19 @@ struct T_FILE
         m_name(p_name),
         m_ext(FileUtils::getFileExtension(p_name)),
         m_size(p_size),
+		m_symlink(false),
         m_selected(false)
     { FileUtils::toLower(m_ext); }
 
+	// Constructor
+    T_FILE(const std::string &p_name, const unsigned long long int &p_size, const bool p_symlink):
+        m_name(p_name),
+        m_ext(FileUtils::getFileExtension(p_name)),
+        m_size(p_size),
+		m_symlink(p_symlink),
+        m_selected(false)
+    { FileUtils::toLower(m_ext); }
+	
     // Copy constructor
     T_FILE(const T_FILE &p_source) = default;
 
@@ -40,6 +51,7 @@ struct T_FILE
     std::string m_name;
     std::string m_ext;
     unsigned long long int m_size;
+	bool m_symlink;
     bool m_selected;
 };
 

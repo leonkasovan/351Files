@@ -109,8 +109,10 @@ void MainWindow::render(const bool p_focus) {
             SDLUtils::renderTexture(g_iconDir, MARGIN_X, l_y, SDLUtils::T_ALIGN_LEFT, SDLUtils::T_ALIGN_MIDDLE);
         else if (ImageViewer::extensionIsSupported(m_fileLister[l_i].m_ext))
             SDLUtils::renderTexture(g_iconImage, MARGIN_X, l_y, SDLUtils::T_ALIGN_LEFT, SDLUtils::T_ALIGN_MIDDLE);
+        else if (m_fileLister[l_i].m_symlink)
+            SDLUtils::renderTexture(g_iconCopy, MARGIN_X, l_y, SDLUtils::T_ALIGN_LEFT, SDLUtils::T_ALIGN_MIDDLE);
         else
-            SDLUtils::renderTexture(g_iconFile, MARGIN_X, l_y, SDLUtils::T_ALIGN_LEFT, SDLUtils::T_ALIGN_MIDDLE);
+			SDLUtils::renderTexture(g_iconFile, MARGIN_X, l_y, SDLUtils::T_ALIGN_LEFT, SDLUtils::T_ALIGN_MIDDLE);
 
         // File size
         if (m_fileLister[l_i].m_size == ULLONG_MAX)
@@ -463,12 +465,14 @@ void MainWindow::openHighlightedFile(void) {
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
 		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
-        l_dialog.addOption("View as text", 0, g_iconFileText);
-        l_dialog.addOption("Edit as text", 1, g_iconEdit);
-        l_dialog.addOption("Cancel", 2, g_iconCancel);
+        l_dialog.addOption("View as text", 1, g_iconFileText);
+        l_dialog.addOption("Edit as text", 2, g_iconEdit);
+		if (m_fileLister[m_cursor].m_ext == "lua") { l_dialog.addOption("Run with [lua]", 3, g_iconFile); }
+		if (m_fileLister[m_cursor].m_ext == "lua") { l_dialog.addOption("Run with [luax]", 4, g_iconFile); }
+        l_dialog.addOption("Cancel", 0, g_iconCancel);
         action = l_dialog.execute();
     }
-    if (action != 0 && action != 1)
+    if (action < 1)
         return;
 
     // If the file is > 1M, ask for confirmation
@@ -482,9 +486,19 @@ void MainWindow::openHighlightedFile(void) {
     }
 
     // View file as text
-    if (action == 0) {
+    if (action == 1) {
         TextViewer textViewer(filePath);
         textViewer.execute();
+    }else if (action == 3) {
+		system(("lua "+filePath+" >contents.lua.txt").c_str());
+		TextViewer textViewer("contents.lua.txt");
+		textViewer.execute();
+		FileUtils::runCommand("rm", "contents.lua.txt");
+    }else if (action == 4) {
+        system(("luax "+filePath+" >contents.luax.txt").c_str());
+		TextViewer textViewer("contents.luax.txt");
+		textViewer.execute();
+		FileUtils::runCommand("rm", "contents.luax.txt");
     }
     // Edit file as text
     else {
