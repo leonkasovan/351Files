@@ -62,7 +62,6 @@ const bool CFileLister::list(const std::string &p_path)
                 if (S_ISDIR(l_stat.st_mode)) // It's a directory
                     m_listDirs.push_back(T_FILE(l_file, ULLONG_MAX));
                 else{ // It's a file
-					// std::cout << "mode: " << l_file << " " << l_stat.st_mode << std::endl;;
                     if (l_dirent->d_type == DT_LNK)
 						m_listFiles.push_back(T_FILE(l_file, l_stat.st_size, true));
 					else

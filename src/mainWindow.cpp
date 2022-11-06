@@ -334,6 +334,8 @@ void MainWindow::openHighlightedFile(void) {
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
 		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
+		if (strncmp(result, "ELF 64-bit LSB pie executable",29) == 0){l_dialog.addOption("Run", 99, g_iconSelect); }
+		if (strncmp(result, "ELF 64-bit LSB executable",25) == 0){l_dialog.addOption("Run", 99, g_iconSelect); }
 		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("View contents", 1, g_iconFile); }
 		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("Install", 2, g_iconDisk); }
 		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("Extract", 3, g_iconNewDir); }
@@ -356,7 +358,19 @@ void MainWindow::openHighlightedFile(void) {
         l_dialog.addOption("Close", 0, g_iconCancel);
         int action = l_dialog.execute();
 		
-		if (action == 1){ // View deb contents
+		if (action == 99){ // Run elf executable
+			int rc = system((filePath+" >contents.elf.txt").c_str());
+			if (!rc){
+				TextViewer textViewer("contents.elf.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "contents.elf.txt");
+			}else{
+				Dialog l_dialog("Warning:");
+				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addOption("Close", 1, g_iconCancel);
+				l_dialog.execute();
+			}
+		}else if (action == 1){ // View deb contents
 			std::string cmd = "ar x "+filePath+" data.tar.xz && unxz data.tar.xz && tar tf data.tar >contents.deb.txt && rm data.tar";
 			int rc = system(cmd.c_str());
 			if (!rc){
