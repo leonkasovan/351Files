@@ -24,6 +24,9 @@ class Dialog : public IWindow
 
    // Add a menu option
    void addOption(const std::string &p_option, const int p_retVal, SDL_Texture *p_icon = NULL);
+   
+   // Add labels from a file
+   void addLabelFromFile(const std::string &filename);
 
    private:
 

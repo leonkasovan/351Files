@@ -9,7 +9,7 @@ TARGET = 351Files
 # DEVICE ?= CHI
 
 DEVICE = RG353P
-START_PATH = /storage
+START_PATH = /storage/roms/psx
 RES_PATH = /usr/share/351files/res
 CC = g++
 SDL2_CONFIG = sdl2-config

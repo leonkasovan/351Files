@@ -1,6 +1,7 @@
 #include "dialog.h"
 #include "def.h"
 #include "sdlutils.h"
+#include <fstream>
 
 // Constructor
 Dialog::Dialog(const std::string &p_title):
@@ -182,4 +183,16 @@ void Dialog::addOption(const std::string &p_option, const int p_retVal, SDL_Text
    ++m_nbItems;
    if (p_icon != NULL && !m_iconPresent)
       m_iconPresent = true;
+}
+
+// Add labels from a file
+void Dialog::addLabelFromFile(const std::string &filename){
+	std::ifstream ifs;
+    std::string line;
+
+	ifs.open(filename);
+    while( std::getline( ifs, line ) ) {
+		m_labels.push_back(line);
+    }
+	ifs.close();
 }

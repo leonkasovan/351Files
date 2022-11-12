@@ -355,6 +355,12 @@ void MainWindow::openHighlightedFile(void) {
 		if (m_fileLister[m_cursor].m_ext == "xz") { l_dialog.addOption("Extract and keep", 12, g_iconNewDir); }
 		if (m_fileLister[m_cursor].m_ext == "xz") { l_dialog.addOption("Extract and delete", 13, g_iconNewDir); }
 		
+		if (m_fileLister[m_cursor].m_ext == "love") { l_dialog.addOption("Run", 14, g_iconSelect); }
+		if (m_fileLister[m_cursor].m_ext == "love") { l_dialog.addOption("View Source", 15, g_iconFile); }
+		
+		if (strstr(m_title.c_str(),"/roms/")) { l_dialog.addOption("Find [libretro] cheat", 16, g_iconSelect); }
+		if (strstr(m_title.c_str(),"/roms/")) { l_dialog.addOption("Download [libretro] cheat", 17, g_iconSelect); }
+		
         l_dialog.addOption("Close", 0, g_iconCancel);
         int action = l_dialog.execute();
 		
@@ -461,10 +467,83 @@ void MainWindow::openHighlightedFile(void) {
 			FileUtils::runCommand("gzip", "-dk", filePath);
 		}else if (action == 11){	// Extract and delete gz file
 			FileUtils::runCommand("gzip", "-d", filePath);
-		}else if (action == 10){	// Extract and keep xz file
+		}else if (action == 12){	// Extract and keep xz file
 			FileUtils::runCommand("unxz", "-dk", filePath);
-		}else if (action == 11){	// Extract and delete xz file
+		}else if (action == 13){	// Extract and delete xz file
 			FileUtils::runCommand("unxz", filePath);
+		}else if (action == 14){	// Run love script file
+			// FileUtils::runCommand("/storage/usr/bin/love-11.3", filePath);
+			system(("love "+filePath).c_str());
+		}else if (action == 15){	// View love script file
+			//to be define
+		}else if (action == 16){	// Find libretro cheat
+			char gamename[1024];
+			char *p;
+			
+			strcpy(gamename, m_fileLister[m_cursor].m_name.c_str());
+			p = strrchr(gamename, '.');
+			if (p){
+				*p = 0;
+			}
+			TextInput textInput("Game name:", g_iconImage, gamename);
+			if (textInput.execute() == -2 || textInput.getInputText().empty()) {
+				return;
+			}
+			int rc = system(("find /usr/share/anbernic/datainit/cheats/ -iname '*"+textInput.getInputText()+"*.cht' | sed 's/\\/usr\\/share\\/anbernic\\/datainit\\/cheats\\///' > cheats_found.txt").c_str());
+			if (!rc){
+				TextViewer textViewer("cheats_found.txt");
+				textViewer.execute();
+				FileUtils::runCommand("rm", "cheats_found.txt");
+			}
+		}else if (action == 17){	// Download libretro cheat
+			char gamename[1024];
+			char *p;
+			int n;
+			std::vector<std::string> gameid;
+			strcpy(gamename, m_fileLister[m_cursor].m_name.c_str());
+			p = strrchr(gamename, '.');
+			if (p){*p = 0;}
+			TextInput textInput("Game name:", g_iconImage, gamename);
+			if (textInput.execute() == -2 || textInput.getInputText().empty()) return;
+			int rc = system(("gamehacking.lua '"+m_title+"' '"+textInput.getInputText()+"' > cheats_found.txt").c_str());
+			if (rc) return;
+			FILE *f;
+			f = fopen("cheats_found.txt","r");
+			if (!f) return;
+			n = 0;
+			{
+			Dialog l_dialog("Cheats:");
+			while(fgets(gamename,1024,f)){
+				p = strrchr(gamename, '\n'); if (p){ *p = 0; }	// strip newline at the end
+				p = strrchr(gamename, '|');
+				if (p){
+					*p = 0;
+					gameid.push_back(p+1);
+					l_dialog.addOption(gamename, n++, g_iconFileText);
+				}
+			}
+			fclose(f);
+			FileUtils::runCommand("rm", "cheats_found.txt");
+			l_dialog.addOption("Cancel", n, g_iconCancel);
+			action = l_dialog.execute();
+			}
+			
+			if (action == n) return;
+			rc = system(("gamehacking.lua '"+gameid[action]+"' > cheats_filename.txt").c_str());
+			if (rc) return;
+			strcpy(gamename, "");
+			f = fopen("cheats_filename.txt","r"); 
+			fgets(gamename,1024,f); p = strrchr(gamename, '\n'); if (p){ *p = 0; }
+			fclose(f);
+			FileUtils::runCommand("rm", "cheats_filename.txt");
+			FileUtils::runCommand("mv", gamename, "/userdata/cheats/");
+			{
+			Dialog l_dialog("Info:");
+			l_dialog.addLabel(gamename);
+			l_dialog.addLabel("Successfully saved to /userdata/cheats");
+			l_dialog.addOption("Close", n, g_iconSelect);
+			l_dialog.execute();
+			}
 		}
 		refresh();
         return;

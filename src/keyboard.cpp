@@ -86,7 +86,7 @@ void Keyboard::render(const bool p_focus)
 // Key pressed
 void Keyboard::keyPressed(const SDL_Event &event)
 {
-   // Button Validate
+   // Button [A]
    if (BUTTON_PRESSED_VALIDATE)
    {
       // Input key
@@ -95,7 +95,7 @@ void Keyboard::keyPressed(const SDL_Event &event)
       m_timer = KEYHOLD_TIMER_FIRST;
       return;
    }
-   // Button Back
+   // Button [B]
    if (BUTTON_PRESSED_BACK)
    {
       // Reset timer
@@ -103,6 +103,29 @@ void Keyboard::keyPressed(const SDL_Event &event)
       // Close window with no return value
       m_retVal = -2;
       return;
+   }
+   // Button [Y]
+   if (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 3){
+	   m_parent->keyboardBackspace();
+	   return;
+   }
+   
+   // Button [X]
+   if (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 2){
+	   m_retVal = 0;
+	   return;
+   }
+   
+   // Button [SELECT]
+   if (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 8){
+	   m_parent->keyboardMoveLeft();
+	   return;
+   }
+   
+   // Button [START]
+   if (event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 9){
+	   m_parent->keyboardMoveRight();
+	   return;
    }
 }
 
