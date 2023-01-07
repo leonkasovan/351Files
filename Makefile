@@ -1,4 +1,5 @@
-TARGET = 351Files
+#TARGET = 351Files
+TARGET = EnhancedFileManager
 
 # DEVICE ?= RG353P
 # DEVICE ?= RG351P
@@ -9,15 +10,16 @@ TARGET = 351Files
 # DEVICE ?= CHI
 
 DEVICE = RG353P
-START_PATH = /storage/roms/psx
-RES_PATH = /usr/share/351files/res
+START_PATH = /storage/roms
+#RES_PATH = /usr/share/351files/res
+RES_PATH = res
 CC = g++
-SDL2_CONFIG = sdl2-config
+SDL2_CONFIG = pkg-config sdl2,SDL2_ttf,SDL2_image
 
 SRC = $(wildcard src/*.cpp)
 OBJ = $(patsubst %cpp,%o,$(SRC))
 COMPILER_FLAGS =  $(shell $(SDL2_CONFIG) --cflags) -Wall -pedantic -Wfatal-errors -DDEVICE_$(DEVICE) -DSTART_PATH=\"$(START_PATH)\" -DRES_PATH=\"$(RES_PATH)\"
-LINKER_FLAGS = $(shell $(SDL2_CONFIG) --libs) -lSDL2_image -lSDL2_ttf
+LINKER_FLAGS = $(shell $(SDL2_CONFIG) --libs)
 
 all : $(OBJ)
 	$(CC) $(OBJ) -o $(TARGET) $(LINKER_FLAGS)
