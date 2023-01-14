@@ -47,7 +47,7 @@ class MainWindow : public IWindow
    void openContextMenu(void);
 
    // Open menu
-   void openMenu(void);
+   void openMenu(std::string l_newDir);
    
    // Adjust camera
    void adjustCamera(void);
