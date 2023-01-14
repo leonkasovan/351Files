@@ -46,6 +46,9 @@ class MainWindow : public IWindow
    // Open context menu
    void openContextMenu(void);
 
+   // Open menu
+   void openMenu(void);
+   
    // Adjust camera
    void adjustCamera(void);
 
