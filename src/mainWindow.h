@@ -43,11 +43,14 @@ class MainWindow : public IWindow
    // Select highlighted item
    void selectHighlightedItem(const bool p_step);
 
+   // Open menu
+   void gotoDir(std::string l_newDir);
+
    // Open context menu
    void openContextMenu(void);
 
-   // Open menu
-   void openMenu(std::string l_newDir);
+   // Open (extended) menu
+   void openMenu(void);
    
    // Adjust camera
    void adjustCamera(void);
