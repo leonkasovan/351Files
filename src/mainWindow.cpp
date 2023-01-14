@@ -217,6 +217,14 @@ void MainWindow::keyPressed(const SDL_Event & event) {
         openContextMenu();
         return;
     }
+    // Button context menu
+    if (BUTTON_PRESSED_MENU) {
+        // Reset timer
+        resetTimer();
+        // Open context menu
+        openMenu();
+        return;
+    }	
     // Button select
     if (BUTTON_PRESSED_SELECT) {
         // Reset timer
@@ -235,6 +243,35 @@ void MainWindow::keyPressed(const SDL_Event & event) {
 }
 
 //------------------------------------------------------------------------------
+// Go to full path l_newDir
+void MainWindow::gotoDir(std::string l_newDir){
+	// List the new path
+	if (!m_fileLister.list(l_newDir)) {
+		// An error occurred, stay at current dir
+		m_fileLister.list(m_title);
+		g_hasChanged = true;
+		return;
+	}
+
+	// New path is OK
+	m_title = l_newDir;
+	m_nbItems = m_fileLister.getNbElements();
+	// If it's a back movement, restore old highlighted dir
+	if (!l_oldDir.empty())
+		m_cursor = m_fileLister.searchDir(l_oldDir);
+	else
+		m_cursor = 0;
+	
+	// Adjust camera
+	adjustCamera();
+	// Adjust scrollbar
+	adjustScrollbar();
+	// New render
+	g_hasChanged = true;
+	// tambahkan chdir
+	chdir(l_newDir.c_str());
+	INHIBIT(std::cout << "Path: " << m_title << " (" << m_nbItems << ") items\n";)
+}
 
 // Open highlighted dir
 void MainWindow::openHighlightedDir(void) {
@@ -253,31 +290,7 @@ void MainWindow::openHighlightedDir(void) {
         l_newDir = m_title + (m_title == "/" ? "" : "/") + m_fileLister[m_cursor].m_name;
     }
 
-    // List the new path
-    if (!m_fileLister.list(l_newDir)) {
-        // An error occurred, stay at current dir
-        m_fileLister.list(m_title);
-        g_hasChanged = true;
-        return;
-    }
-
-    // New path is OK
-    m_title = l_newDir;
-    m_nbItems = m_fileLister.getNbElements();
-    // If it's a back movement, restore old highlighted dir
-    if (!l_oldDir.empty())
-        m_cursor = m_fileLister.searchDir(l_oldDir);
-    else
-        m_cursor = 0;
-    // Adjust camera
-    adjustCamera();
-    // Adjust scrollbar
-    adjustScrollbar();
-    // New render
-    g_hasChanged = true;
-	// tambahkan chdir
-	chdir(l_newDir.c_str());
-    INHIBIT(std::cout << "Path: " << m_title << " (" << m_nbItems << ") items\n";)
+    gotoDir(l_newDir);
 }
 
 //------------------------------------------------------------------------------
@@ -733,6 +746,46 @@ void MainWindow::openContextMenu(void) {
 
 //------------------------------------------------------------------------------
 
+// Open menu
+void MainWindow::openMenu(void) {
+	
+	Dialog l_dialog(oss.str());
+	l_dialog.addOption("Goto /", 100, g_iconNewDir);
+	l_dialog.addOption("Goto /etc", 101, g_iconNewDir);
+	l_dialog.addOption("Goto /usr", 102, g_iconNewDir);
+	l_dialog.addOption("Goto /etc/init.d", 103, g_iconNewDir);
+	l_dialog.addOption("Goto /userdata/roms", 104, g_iconNewDir);
+	l_dialog.addOption("Goto /userdata/system/configs", 105, g_iconNewDir);
+        l_dialog.addOption("Quit", 999, g_iconQuit);
+        result = l_dialog.execute();
+	
+	switch (result) {
+		case 100:
+			gotoDir("/");
+			break;
+		case 101:
+			gotoDir("/etc");
+			break;
+		case 102:
+			gotoDir("/usr");
+			break;
+		case 103:
+			gotoDir("/etc/init.d");
+			break;
+		case 104:
+			gotoDir("/userdata/roms");
+			break;
+		case 105:
+			gotoDir("/userdata/system/configs");
+			break;
+	
+		// Quit
+		case 999:
+			m_retVal = 0;
+			break;
+	}
+}
+//------------------------------------------------------------------------------
 // Refresh current directory
 void MainWindow::refresh(void) {
     INHIBIT(std::cout << "MainWindow::refresh\n";)
