@@ -44,7 +44,7 @@ class MainWindow : public IWindow
    void selectHighlightedItem(const bool p_step);
 
    // Open menu
-   void gotoDir(std::string l_newDir);
+   void gotoDir(std::string l_newDir, std::string l_oldDir);
 
    // Open context menu
    void openContextMenu(void);

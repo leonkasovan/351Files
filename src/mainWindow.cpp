@@ -244,7 +244,7 @@ void MainWindow::keyPressed(const SDL_Event & event) {
 
 //------------------------------------------------------------------------------
 // Go to full path l_newDir
-void MainWindow::gotoDir(std::string l_newDir){
+void MainWindow::gotoDir(std::string l_newDir, std::string l_oldDir){
 	// List the new path
 	if (!m_fileLister.list(l_newDir)) {
 		// An error occurred, stay at current dir
@@ -290,7 +290,7 @@ void MainWindow::openHighlightedDir(void) {
         l_newDir = m_title + (m_title == "/" ? "" : "/") + m_fileLister[m_cursor].m_name;
     }
 
-    gotoDir(l_newDir);
+    gotoDir(l_newDir, l_oldDir);
 }
 
 //------------------------------------------------------------------------------
@@ -748,8 +748,8 @@ void MainWindow::openContextMenu(void) {
 
 // Open menu
 void MainWindow::openMenu(void) {
-	
-	Dialog l_dialog(oss.str());
+	int result = -1;
+	Dialog l_dialog("Extended Menu");
 	l_dialog.addOption("Goto /", 100, g_iconNewDir);
 	l_dialog.addOption("Goto /etc", 101, g_iconNewDir);
 	l_dialog.addOption("Goto /usr", 102, g_iconNewDir);
@@ -758,27 +758,27 @@ void MainWindow::openMenu(void) {
 	l_dialog.addOption("Goto /userdata/system/configs", 105, g_iconNewDir);
         l_dialog.addOption("Quit", 999, g_iconQuit);
         result = l_dialog.execute();
-	
+
 	switch (result) {
 		case 100:
-			gotoDir("/");
+			gotoDir("/", "");
 			break;
 		case 101:
-			gotoDir("/etc");
+			gotoDir("/etc", "");
 			break;
 		case 102:
-			gotoDir("/usr");
+			gotoDir("/usr", "");
 			break;
 		case 103:
-			gotoDir("/etc/init.d");
+			gotoDir("/etc/init.d", "");
 			break;
 		case 104:
-			gotoDir("/userdata/roms");
+			gotoDir("/userdata/roms", "");
 			break;
 		case 105:
-			gotoDir("/userdata/system/configs");
+			gotoDir("/userdata/system/configs", "");
 			break;
-	
+
 		// Quit
 		case 999:
 			m_retVal = 0;
