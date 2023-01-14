@@ -540,7 +540,7 @@ void MainWindow::openHighlightedFile(void) {
 			l_dialog.addOption("Cancel", n, g_iconCancel);
 			action = l_dialog.execute();
 			}
-			
+
 			if (action == n) return;
 			rc = system(("gamehacking.lua '"+gameid[action]+"' > cheats_filename.txt").c_str());
 			if (rc) return;
@@ -745,19 +745,206 @@ void MainWindow::openContextMenu(void) {
 }
 
 //------------------------------------------------------------------------------
+char *strcpy_tolower(char *dst, const char *src){
+	char *p;
+	const char *q;
+
+	p = dst; q = src;
+	while (*q) {
+		*p++ = tolower(*q++);
+	}
+	*p = 0;
+	return dst;
+}
+
+void MainWindow::getGameboyAdvanceRom() {
+	char search[64], str_lower[1024], line[1024], *rom_name, *p;
+	FILE *f;
+	std::vector<std::string> gameid;
+	int rc, n, action = -1;
+
+
+	{ // textInput needed just in here then close after end of scope
+	TextInput textInput("Gameboy Advance Game Name:", g_iconImage, "tetris");
+	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
+		return;
+	}
+	strcpy_tolower(search, textInput.getInputText().c_str());
+	} // textInput End scope
+
+	{ //Dialog scope
+	Dialog l_dialog("Gameboy Advance Roms:");
+	n = 0;
+	//Format data_snes_roms.csv: data_url(A%20Bug%27s%20Life.zip)|rom_name(A Bug's Life)|rom_size (566.1K)
+	f = fopen((std::string(RES_PATH)+"/data_gba_roms.csv").c_str(),"rt");
+	if (!f) {printf("Can not open Rom data: [%s%s]\n", RES_PATH, "/data_gba_roms.csv"); return;}
+	while (fgets(line,1023,f)) {
+		p = strrchr(line, '\n'); if (p) *p = 0;	//trim last newline
+		p = strchr(line, '|');
+		if (p) {
+			*p = 0;
+			strcpy_tolower(str_lower, p + 1); //printf("rom_name_lower: [%s]", str_lower);
+			if (strstr(str_lower, search)) {
+				rom_name = p + 1;
+				p = strchr(rom_name, '|'); if (p) *p = ' ';	//replace | to space
+				gameid.push_back(line); //add first column to array gameid
+				l_dialog.addOption(rom_name, n++, g_iconFileText);  //display second and third column
+			}
+		}
+	}
+	fclose(f);
+	l_dialog.addOption("Cancel", n, g_iconCancel);
+	action = l_dialog.execute();
+	} //end Dialog scope
+
+	if (action == n) return;
+	rc = system(("cd /userdata/roms/gba && wget https://archive.org/download/gameboy-advance-romset-ultra-us/"+gameid[action]).c_str());
+	if (rc){
+		Dialog l_dialog("Error:");
+	        l_dialog.addLabel("Can not download rom. Check connection.");
+	        l_dialog.addOption("Close", n, g_iconCancel);
+	        l_dialog.execute();
+	}else{
+		Dialog l_dialog("Info:");
+	        l_dialog.addLabel("ROM has been downloaded in");
+	        l_dialog.addLabel("/userdata/roms/gba");
+	        l_dialog.addLabel("Refresh: Main Menu -> Games Settings -> Update Games Lists");
+	        l_dialog.addOption("Close", n, g_iconSelect);
+	        l_dialog.execute();
+	}
+}
+
+void MainWindow::getSNESRom() {
+	char search[64], str_lower[1024], line[1024], *rom_name, *p;
+	FILE *f;
+	std::vector<std::string> gameid;
+	int rc, n, action = -1;
+
+
+	{ // textInput needed just in here then close after end of scope
+	TextInput textInput("SNES Game Name:", g_iconImage, "tetris");
+	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
+		return;
+	}
+	strcpy_tolower(search, textInput.getInputText().c_str());
+	} // textInput End scope
+
+	{ //Dialog scope
+	Dialog l_dialog("SNES Roms:");
+	n = 0;
+	//Format data_snes_roms.csv: data_url(A%20Bug%27s%20Life.zip)|rom_name(A Bug's Life)|rom_size (566.1K)
+	f = fopen((std::string(RES_PATH)+"/data_snes_roms.csv").c_str(),"rt");
+	if (!f) {printf("Can not open Rom data: [%s%s]\n", RES_PATH, "/data_snes_roms.csv"); return;}
+	while (fgets(line,1023,f)) {
+		p = strrchr(line, '\n'); if (p) *p = 0;	//trim last newline
+		p = strchr(line, '|');
+		if (p) {
+			*p = 0;
+			strcpy_tolower(str_lower, p + 1); //printf("rom_name_lower: [%s]", str_lower);
+			if (strstr(str_lower, search)) {
+				rom_name = p + 1;
+				p = strchr(rom_name, '|'); if (p) *p = ' ';	//replace | to space
+				gameid.push_back(line); //add first column to array gameid
+				l_dialog.addOption(rom_name, n++, g_iconFileText);  //display second and third column
+			}
+		}
+	}
+	fclose(f);
+	l_dialog.addOption("Cancel", n, g_iconCancel);
+	action = l_dialog.execute();
+	} //end Dialog scope
+
+	if (action == n) return;
+	rc = system(("cd /userdata/roms/snes && wget https://archive.org/download/snes-romset-ultra-us/"+gameid[action]).c_str());
+	if (rc){
+		Dialog l_dialog("Error:");
+	        l_dialog.addLabel("Can not download rom. Check connection.");
+	        l_dialog.addOption("Close", n, g_iconCancel);
+	        l_dialog.execute();
+	}else{
+		Dialog l_dialog("Info:");
+	        l_dialog.addLabel("ROM has been downloaded in");
+	        l_dialog.addLabel("/userdata/roms/snes");
+	        l_dialog.addLabel("Refresh: Main Menu -> Games Settings -> Update Games Lists");
+	        l_dialog.addOption("Close", n, g_iconSelect);
+	        l_dialog.execute();
+	}
+}
+
+void MainWindow::getSegaGenesisRom() {
+	char search[64], str_lower[1024], line[1024], *rom_name, *p;
+	FILE *f;
+	std::vector<std::string> gameid;
+	int rc, n, action = -1;
+
+
+	{ // textInput needed just in here then close after end of scope
+	TextInput textInput("Sega Genesis Game Name:", g_iconImage, "mortal");
+	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
+		return;
+	}
+	strcpy_tolower(search, textInput.getInputText().c_str());
+	} // textInput End scope
+
+	{ //Dialog scope
+	Dialog l_dialog("Sega Genesis Roms:");
+	n = 0;
+	//Format data_snes_roms.csv: data_url(A%20Bug%27s%20Life.zip)|rom_name(A Bug's Life)|rom_size (566.1K)
+	f = fopen((std::string(RES_PATH)+"/data_sega_genesis_roms.csv").c_str(),"rt");
+	if (!f) {printf("Can not open Rom data: [%s%s]\n", RES_PATH, "/data_sega_genesis_roms.csv"); return;}
+	while (fgets(line,1023,f)) {
+		p = strrchr(line, '\n'); if (p) *p = 0;	//trim last newline
+		p = strchr(line, '|');
+		if (p) {
+			*p = 0;
+			strcpy_tolower(str_lower, p + 1); //printf("rom_name_lower: [%s]", str_lower);
+			if (strstr(str_lower, search)) {
+				rom_name = p + 1;
+				p = strchr(rom_name, '|'); if (p) *p = ' ';	//replace | to space
+				gameid.push_back(line); //add first column to array gameid
+				l_dialog.addOption(rom_name, n++, g_iconFileText);  //display second and third column
+			}
+		}
+	}
+	fclose(f);
+	l_dialog.addOption("Cancel", n, g_iconCancel);
+	action = l_dialog.execute();
+	} //end Dialog scope
+
+	if (action == n) return;
+	rc = system(("cd /userdata/roms/genesis && wget https://archive.org/download/sega-genesis-romset-ultra-usa/"+gameid[action]).c_str());
+	if (rc){
+		Dialog l_dialog("Error:");
+	        l_dialog.addLabel("Can not download rom. Check connection.");
+	        l_dialog.addOption("Close", n, g_iconCancel);
+	        l_dialog.execute();
+	}else{
+		Dialog l_dialog("Info:");
+	        l_dialog.addLabel("ROM has been downloaded in");
+	        l_dialog.addLabel("/userdata/roms/genesis");
+	        l_dialog.addLabel("Refresh: Main Menu -> Games Settings -> Update Games Lists");
+	        l_dialog.addOption("Close", n, g_iconSelect);
+	        l_dialog.execute();
+	}
+}
 
 // Open menu
 void MainWindow::openMenu(void) {
 	int result = -1;
+	{ //Dialog scope
 	Dialog l_dialog("Extended Menu");
-	l_dialog.addOption("Goto /", 100, g_iconNewDir);
-	l_dialog.addOption("Goto /etc", 101, g_iconNewDir);
-	l_dialog.addOption("Goto /usr", 102, g_iconNewDir);
-	l_dialog.addOption("Goto /etc/init.d", 103, g_iconNewDir);
-	l_dialog.addOption("Goto /userdata/roms", 104, g_iconNewDir);
-	l_dialog.addOption("Goto /userdata/system/configs", 105, g_iconNewDir);
+	l_dialog.addOption("Goto /", 100, g_iconDir);
+	l_dialog.addOption("Goto /etc", 101, g_iconDir);
+	l_dialog.addOption("Goto /usr", 102, g_iconDir);
+	l_dialog.addOption("Goto /userdata", 103, g_iconDir);
+	l_dialog.addOption("Goto /userdata/roms", 104, g_iconDir);
+	l_dialog.addOption("Goto /userdata/system", 105, g_iconDir);
+	l_dialog.addOption("Get SNES Rom", 200, g_iconImage);
+	l_dialog.addOption("Get Sega Genesis Rom", 201, g_iconImage);
+	l_dialog.addOption("Get Gameboy Advance Rom", 202, g_iconImage);
         l_dialog.addOption("Quit", 999, g_iconQuit);
         result = l_dialog.execute();
+	} //end scope
 
 	switch (result) {
 		case 100:
@@ -770,15 +957,23 @@ void MainWindow::openMenu(void) {
 			gotoDir("/usr", "");
 			break;
 		case 103:
-			gotoDir("/etc/init.d", "");
+			gotoDir("/userdata", "");
 			break;
 		case 104:
 			gotoDir("/userdata/roms", "");
 			break;
 		case 105:
-			gotoDir("/userdata/system/configs", "");
+			gotoDir("/userdata/system", "");
 			break;
-
+		case 200:
+			getSNESRom();
+			break;
+		case 201:
+			getSegaGenesisRom();
+			break;
+		case 202:
+			getGameboyAdvanceRom();
+			break;
 		// Quit
 		case 999:
 			m_retVal = 0;

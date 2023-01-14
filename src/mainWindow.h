@@ -4,6 +4,7 @@
 #include <string>
 #include <SDL.h>
 #include "window.h"
+#include "dialog.h"
 #include "fileLister.h"
 
 class MainWindow : public IWindow
@@ -51,7 +52,10 @@ class MainWindow : public IWindow
 
    // Open (extended) menu
    void openMenu(void);
-   
+   void getSNESRom(void);
+   void getSegaGenesisRom(void);
+   void getGameboyAdvanceRom(void);
+
    // Adjust camera
    void adjustCamera(void);
 

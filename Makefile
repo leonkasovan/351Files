@@ -11,8 +11,8 @@ TARGET = EnhancedFileManager
 
 DEVICE = RG353P
 START_PATH = /storage/roms
-#RES_PATH = /usr/share/351files/res
-RES_PATH = res
+RES_PATH = /usr/share/FileManager/res
+#RES_PATH = res
 CC = g++
 SDL2_CONFIG = pkg-config sdl2,SDL2_ttf,SDL2_image
 
