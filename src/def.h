@@ -177,7 +177,8 @@
    #define BUTTON_PRESSED_BACK            event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 0
    #define BUTTON_PRESSED_MENU_CONTEXT    event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 2
    #define BUTTON_PRESSED_SELECT          event.type == SDL_JOYBUTTONDOWN && event.jbutton.button == 3
-   #define BUTTON_PRESSED_QUIT	          event.type == SDL_JOYBUTTONDOWN && (event.jbutton.button == 9)
+   #define BUTTON_PRESSED_QUIT	          event.type == SDL_JOYBUTTONDOWN && (event.jbutton.button == 8)
+   #define BUTTON_PRESSED_MENU	          event.type == SDL_JOYBUTTONDOWN && (event.jbutton.button == 9)
    #define BUTTON_HELD_UP                 SDL_JoystickGetButton(g_joystick, 13)
    #define BUTTON_HELD_DOWN               SDL_JoystickGetButton(g_joystick, 14)
    #define BUTTON_HELD_LEFT               SDL_JoystickGetButton(g_joystick, 15)
