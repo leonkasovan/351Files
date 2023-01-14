@@ -765,7 +765,7 @@ void MainWindow::getGameboyAdvanceRom() {
 
 
 	{ // textInput needed just in here then close after end of scope
-	TextInput textInput("Gameboy Advance Game Name:", g_iconImage, "tetris");
+	TextInput textInput("Gameboy Advance Game Name:", g_iconImage, "rayman");
 	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
 		return;
 	}
@@ -797,7 +797,7 @@ void MainWindow::getGameboyAdvanceRom() {
 	action = l_dialog.execute();
 	} //end Dialog scope
 
-	if (action == n) return;
+	if (action == n || action == -2) return;	// User click Cancel or BACK button (-2)
 	rc = system(("cd /userdata/roms/gba && wget https://archive.org/download/gameboy-advance-romset-ultra-us/"+gameid[action]).c_str());
 	if (rc){
 		Dialog l_dialog("Error:");
@@ -854,7 +854,7 @@ void MainWindow::getSNESRom() {
 	action = l_dialog.execute();
 	} //end Dialog scope
 
-	if (action == n) return;
+	if (action == n || action == -2) return;	// User click Cancel or BACK button (-2)
 	rc = system(("cd /userdata/roms/snes && wget https://archive.org/download/snes-romset-ultra-us/"+gameid[action]).c_str());
 	if (rc){
 		Dialog l_dialog("Error:");
@@ -911,7 +911,7 @@ void MainWindow::getSegaGenesisRom() {
 	action = l_dialog.execute();
 	} //end Dialog scope
 
-	if (action == n) return;
+	if (action == n || action == -2) return;	// User click Cancel or BACK button (-2)
 	rc = system(("cd /userdata/roms/genesis && wget https://archive.org/download/sega-genesis-romset-ultra-usa/"+gameid[action]).c_str());
 	if (rc){
 		Dialog l_dialog("Error:");
