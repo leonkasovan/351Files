@@ -55,6 +55,7 @@ class MainWindow : public IWindow
    void getSNESRom(void);
    void getSegaGenesisRom(void);
    void getGameboyAdvanceRom(void);
+   void searchDirectory(void);
 
    // Adjust camera
    void adjustCamera(void);

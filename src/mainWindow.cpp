@@ -309,8 +309,7 @@ void MainWindow::openHighlightedFile(void) {
     if (!(FileUtils::fileIsText(filePath) || m_fileLister[m_cursor].m_size == 0)) {
 		std::string desc;
 		char *p, *start;
-		int len;
-        Dialog l_dialog("File Properties:");
+		int len, action;
 		std::string cmd = "file -b \"" + filePath + "\"";
 		char result[2000];
 		FILE *pipe = popen(cmd.c_str(), "r");
@@ -320,6 +319,9 @@ void MainWindow::openHighlightedFile(void) {
 		}
 		while (fgets(result, sizeof(result), pipe) != NULL);
 		pclose(pipe);
+
+		{ // Dialog scope
+		Dialog l_dialog("File Properties:");
 		len = 0;
 		start = p = result;
 		while(*p){
@@ -352,31 +354,32 @@ void MainWindow::openHighlightedFile(void) {
 		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("View contents", 1, g_iconFile); }
 		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("Install", 2, g_iconDisk); }
 		if (m_fileLister[m_cursor].m_ext == "deb") { l_dialog.addOption("Extract", 3, g_iconNewDir); }
-		
+
 		if (m_fileLister[m_cursor].m_ext == "zip") { l_dialog.addOption("View contents", 4, g_iconFile); }
 		if (m_fileLister[m_cursor].m_ext == "zip") { l_dialog.addOption("Extract", 5, g_iconNewDir); }
-		
+
 		if (m_fileLister[m_cursor].m_ext == "tar") { l_dialog.addOption("View contents", 6, g_iconFile); }
 		if (m_fileLister[m_cursor].m_ext == "tar") { l_dialog.addOption("Extract", 7, g_iconNewDir); }
-		
+
 		if (m_fileLister[m_cursor].m_ext == "7z") { l_dialog.addOption("View contents", 8, g_iconFile); }
 		if (m_fileLister[m_cursor].m_ext == "7z") { l_dialog.addOption("Extract", 9, g_iconNewDir); }
-		
+
 		if (m_fileLister[m_cursor].m_ext == "gz") { l_dialog.addOption("Extract and keep", 10, g_iconNewDir); }
 		if (m_fileLister[m_cursor].m_ext == "gz") { l_dialog.addOption("Extract and delete", 11, g_iconNewDir); }
-		
+
 		if (m_fileLister[m_cursor].m_ext == "xz") { l_dialog.addOption("Extract and keep", 12, g_iconNewDir); }
 		if (m_fileLister[m_cursor].m_ext == "xz") { l_dialog.addOption("Extract and delete", 13, g_iconNewDir); }
-		
+
 		if (m_fileLister[m_cursor].m_ext == "love") { l_dialog.addOption("Run", 14, g_iconSelect); }
 		if (m_fileLister[m_cursor].m_ext == "love") { l_dialog.addOption("View Source", 15, g_iconFile); }
-		
+
 		if (strstr(m_title.c_str(),"/roms/")) { l_dialog.addOption("Find [libretro] cheat", 16, g_iconSelect); }
 		if (strstr(m_title.c_str(),"/roms/")) { l_dialog.addOption("Download [libretro] cheat", 17, g_iconSelect); }
-		
-        l_dialog.addOption("Close", 0, g_iconCancel);
-        int action = l_dialog.execute();
-		
+
+		l_dialog.addOption("Close", 0, g_iconCancel);
+		action = l_dialog.execute();
+		} // end scope Dialog
+
 		if (action == 99){ // Run elf executable
 			int rc = system((filePath+" >contents.elf.txt").c_str());
 			if (!rc){
@@ -432,7 +435,7 @@ void MainWindow::openHighlightedFile(void) {
 				l_dialog.execute();
 			}
 		}else if (action == 4){	// View zip contents
-			std::string cmd = "unzip -l "+filePath+" >contents.zip.txt";
+			std::string cmd = "unzip -l '"+filePath+"' >contents.zip.txt";
 			int rc = system(cmd.c_str());
 			if (!rc){
 				TextViewer textViewer("contents.zip.txt");
@@ -441,13 +444,14 @@ void MainWindow::openHighlightedFile(void) {
 			}else{
 				Dialog l_dialog("Warning:");
 				l_dialog.addLabel("Content can not be viewed.");
+				l_dialog.addLabel(cmd);
 				l_dialog.addOption("Close", 1, g_iconCancel);
 				l_dialog.execute();
 			}
 		}else if (action == 5){ //	Extract zip file
 			FileUtils::runCommand("unzip", filePath);
 		}else if (action == 6){	//	View tar contents
-			std::string cmd = "tar tf "+filePath+" >contents.tar.txt";
+			std::string cmd = "tar tf '"+filePath+"' >contents.tar.txt";
 			int rc = system(cmd.c_str());
 			if (!rc){
 				TextViewer textViewer("contents.tar.txt");
@@ -462,7 +466,7 @@ void MainWindow::openHighlightedFile(void) {
 		}else if (action == 7){	// Extract tar file
 			FileUtils::runCommand("tar", "xf", filePath);
 		}else if (action == 8){	// View 7z contents
-			std::string cmd = "7zr l "+filePath+" >contents.7z.txt";
+			std::string cmd = "7zr l '"+filePath+"' >contents.7z.txt";
 			int rc = system(cmd.c_str());
 			if (!rc){
 				TextViewer textViewer("contents.7z.txt");
@@ -492,17 +496,20 @@ void MainWindow::openHighlightedFile(void) {
 		}else if (action == 16){	// Find libretro cheat
 			char gamename[1024];
 			char *p;
-			
+			int rc;
+
 			strcpy(gamename, m_fileLister[m_cursor].m_name.c_str());
 			p = strrchr(gamename, '.');
 			if (p){
 				*p = 0;
 			}
+			{ //TextInput scope: begin
 			TextInput textInput("Game name:", g_iconImage, gamename);
 			if (textInput.execute() == -2 || textInput.getInputText().empty()) {
 				return;
 			}
-			int rc = system(("find /usr/share/anbernic/datainit/cheats/ -iname '*"+textInput.getInputText()+"*.cht' | sed 's/\\/usr\\/share\\/anbernic\\/datainit\\/cheats\\///' > cheats_found.txt").c_str());
+			rc = system(("find /usr/share/anbernic/datainit/cheats/ -iname '*"+textInput.getInputText()+"*.cht' | sed 's/\\/usr\\/share\\/anbernic\\/datainit\\/cheats\\///' > cheats_found.txt").c_str());
+			} //TextInput scope: end
 			if (!rc){
 				TextViewer textViewer("cheats_found.txt");
 				textViewer.execute();
@@ -765,7 +772,7 @@ void MainWindow::getGameboyAdvanceRom() {
 
 
 	{ // textInput needed just in here then close after end of scope
-	TextInput textInput("Gameboy Advance Game Name:", g_iconImage, "rayman");
+	TextInput textInput("Gameboy Advance Game Name:", g_iconImage, "castlevania");
 	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
 		return;
 	}
@@ -797,8 +804,16 @@ void MainWindow::getGameboyAdvanceRom() {
 	action = l_dialog.execute();
 	} //end Dialog scope
 
-	if (action == n || action == -2) return;	// User click Cancel or BACK button (-2)
-	rc = system(("cd /userdata/roms/gba && wget https://archive.org/download/gameboy-advance-romset-ultra-us/"+gameid[action]).c_str());
+	if (action == n || action == -2) { // User click Cancel or BACK button (-2)
+		return;
+	}else{ // Display a "please wait" message
+		Dialog dialogPleaseWait("Downloading");
+		dialogPleaseWait.addLabel("Please wait...");
+		dialogPleaseWait.render(true);
+		IWindow::renderPresent();
+		rc = system(("cd /userdata/roms/gba && wget https://archive.org/download/gameboy-advance-romset-ultra-us/"+gameid[action]).c_str());
+		g_hasChanged = true;
+	}
 	if (rc){
 		Dialog l_dialog("Error:");
 	        l_dialog.addLabel("Can not download rom. Check connection.");
@@ -822,7 +837,7 @@ void MainWindow::getSNESRom() {
 
 
 	{ // textInput needed just in here then close after end of scope
-	TextInput textInput("SNES Game Name:", g_iconImage, "tetris");
+	TextInput textInput("SNES Game Name:", g_iconImage, "super mario");
 	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
 		return;
 	}
@@ -854,8 +869,16 @@ void MainWindow::getSNESRom() {
 	action = l_dialog.execute();
 	} //end Dialog scope
 
-	if (action == n || action == -2) return;	// User click Cancel or BACK button (-2)
-	rc = system(("cd /userdata/roms/snes && wget https://archive.org/download/snes-romset-ultra-us/"+gameid[action]).c_str());
+	if (action == n || action == -2) { // User click Cancel or BACK button (-2)
+		return;
+	}else{ // Display a "please wait" message
+		Dialog dialogPleaseWait("Downloading");
+		dialogPleaseWait.addLabel("Please wait...");
+		dialogPleaseWait.render(true);
+		IWindow::renderPresent();
+		rc = system(("cd /userdata/roms/snes && wget https://archive.org/download/snes-romset-ultra-us/"+gameid[action]).c_str());
+		g_hasChanged = true;
+	}
 	if (rc){
 		Dialog l_dialog("Error:");
 	        l_dialog.addLabel("Can not download rom. Check connection.");
@@ -879,7 +902,7 @@ void MainWindow::getSegaGenesisRom() {
 
 
 	{ // textInput needed just in here then close after end of scope
-	TextInput textInput("Sega Genesis Game Name:", g_iconImage, "mortal");
+	TextInput textInput("Sega Genesis Game Name:", g_iconImage, "sonic");
 	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
 		return;
 	}
@@ -911,8 +934,16 @@ void MainWindow::getSegaGenesisRom() {
 	action = l_dialog.execute();
 	} //end Dialog scope
 
-	if (action == n || action == -2) return;	// User click Cancel or BACK button (-2)
-	rc = system(("cd /userdata/roms/genesis && wget https://archive.org/download/sega-genesis-romset-ultra-usa/"+gameid[action]).c_str());
+	if (action == n || action == -2) { // User click Cancel or BACK button (-2)
+		return;
+	}else{ // Display a "please wait" message
+		Dialog dialogPleaseWait("Downloading");
+		dialogPleaseWait.addLabel("Please wait...");
+		dialogPleaseWait.render(true);
+		IWindow::renderPresent();
+		rc = system(("cd /userdata/roms/megadrive && wget https://archive.org/download/sega-genesis-romset-ultra-usa/"+gameid[action]).c_str());
+		g_hasChanged = true;
+	}
 	if (rc){
 		Dialog l_dialog("Error:");
 	        l_dialog.addLabel("Can not download rom. Check connection.");
@@ -921,10 +952,34 @@ void MainWindow::getSegaGenesisRom() {
 	}else{
 		Dialog l_dialog("Info:");
 	        l_dialog.addLabel("ROM has been downloaded in");
-	        l_dialog.addLabel("/userdata/roms/genesis");
+	        l_dialog.addLabel("/userdata/roms/megadrive");
 	        l_dialog.addLabel("Refresh: Main Menu -> Games Settings -> Update Games Lists");
 	        l_dialog.addOption("Close", n, g_iconSelect);
 	        l_dialog.execute();
+	}
+}
+
+void MainWindow::searchDirectory(void) {
+	int rc;
+	std::string cmd;
+
+	{ // TextInput scope: begin
+	TextInput textInput("Search File/Directory Name:", g_iconImage, "");
+	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
+		return;
+	}
+	cmd = "echo 'Search "+m_title+":' > search_found.txt && find -L "+m_title+" -iname '*"+textInput.getInputText()+"*' >> search_found.txt";
+	rc = system(cmd.c_str());
+	} // TextInput scope: end
+	if (!rc){
+		TextViewer textViewer("search_found.txt");
+		textViewer.execute();
+		FileUtils::runCommand("rm", "search_found.txt");
+	}else{
+		Dialog l_dialog("Error:");
+		l_dialog.addLabel("Directory "+m_title+" can't be search. Check permission.");
+		l_dialog.addOption("Close", 1, g_iconCancel);
+		l_dialog.execute();
 	}
 }
 
@@ -939,11 +994,12 @@ void MainWindow::openMenu(void) {
 	l_dialog.addOption("Goto /userdata", 103, g_iconDir);
 	l_dialog.addOption("Goto /userdata/roms", 104, g_iconDir);
 	l_dialog.addOption("Goto /userdata/system", 105, g_iconDir);
+	l_dialog.addOption("Search current directory", 300, g_iconDir);
 	l_dialog.addOption("Get SNES Rom", 200, g_iconImage);
 	l_dialog.addOption("Get Sega Genesis Rom", 201, g_iconImage);
 	l_dialog.addOption("Get Gameboy Advance Rom", 202, g_iconImage);
-        l_dialog.addOption("Quit", 999, g_iconQuit);
-        result = l_dialog.execute();
+	//l_dialog.addOption("Quit", 999, g_iconQuit);	//Disable it. Use SELECT button to Quit from app.
+	result = l_dialog.execute();
 	} //end scope
 
 	switch (result) {
@@ -973,6 +1029,9 @@ void MainWindow::openMenu(void) {
 			break;
 		case 202:
 			getGameboyAdvanceRom();
+			break;
+		case 300:
+			searchDirectory();
 			break;
 		// Quit
 		case 999:
