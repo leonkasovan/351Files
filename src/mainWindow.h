@@ -52,6 +52,7 @@ class MainWindow : public IWindow
 
    // Open (extended) menu
    void openMenu(void);
+   void getRom(void);
    void getSNESRom(void);
    void getSegaGenesisRom(void);
    void getGameboyAdvanceRom(void);
@@ -73,7 +74,6 @@ class MainWindow : public IWindow
    int m_scrollFileNameX;
    int m_scrollFileNameTimer;
    int m_scrollFileNameDir;
-
 };
 
 #endif

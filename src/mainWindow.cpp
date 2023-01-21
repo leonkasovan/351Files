@@ -13,6 +13,17 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#define N_SYSTEM 4
+
+struct EmuSystem {
+	const char *name;
+	const char *id;
+	const char *db;
+	const char *rom_url;
+};
+
+
+struct EmuSystem g_system[N_SYSTEM];
 
 // Destructor
 MainWindow::~MainWindow(void) {}
@@ -38,6 +49,8 @@ MainWindow::MainWindow(const std::string & p_title):
         adjustScrollbar();
         INHIBIT(std::cout << "Path: " << m_title << " (" << m_nbItems << ") items\n";)
     }
+
+
 
 //------------------------------------------------------------------------------
 
@@ -959,6 +972,110 @@ void MainWindow::getSegaGenesisRom() {
 	}
 }
 
+void MainWindow::getRom() {
+	char search[64], str_lower[1024], line[1024], *rom_name, *p;
+	FILE *f;
+	std::vector<std::string> gameid;
+	int rc, n, action = -1;
+	int n_sys;
+
+	//snes
+	g_system[0].name = "Super Nintendo";
+	g_system[0].id="snes";
+	g_system[0].db="data_snes_roms.csv";
+	g_system[0].rom_url="https://archive.org/download/snes-romset-ultra-us/%s";
+
+	//megadrive
+	g_system[1].name = "Sega Mega Drive / Genesis";
+	g_system[1].id="megadrive";
+	g_system[1].db="data_sega_genesis_roms.csv";
+	g_system[1].rom_url="https://archive.org/download/sega-genesis-romset-ultra-usa/%s";
+
+	//gba
+	g_system[2].name = "Gameboy Advance";
+	g_system[2].id="gba";
+	g_system[2].db="data_gba_roms.csv";
+	g_system[2].rom_url="https://archive.org/download/gameboy-advance-romset-ultra-us/%s";
+
+	//mame
+	g_system[3].name = "Arcade";
+	g_system[3].id="mame";
+	g_system[3].db="data_mame_roms.csv";
+	g_system[3].rom_url="https://archive.org/download/MAME_2003-Plus_Reference_Set_2018/roms/%s.zip";
+
+
+	{ // textInput needed just in here then close after end of scope
+	TextInput textInput("Search rom name:", g_iconImage, "super");
+	if (textInput.execute() == -2 || textInput.getInputText().empty()) {
+		return;
+	}
+	strcpy_tolower(search, textInput.getInputText().c_str());
+	} // textInput End scope
+
+	{ //Dialog scope
+	Dialog l_dialog("ROMs:");
+	n = 0;
+
+	for (n_sys = 0; n_sys < N_SYSTEM; n_sys++){
+		//Format data_roms.csv: data_url(A%20Bug%27s%20Life.zip)|rom_name(A Bug's Life)|rom_size (566.1K)
+		f = fopen((std::string(RES_PATH)+"/"+g_system[n_sys].db).c_str(),"rt");
+		if (!f) {printf("\nCan not open Rom data: [%s/%s]\n", RES_PATH, g_system[n_sys].db); return;}
+		while (fgets(line,1023,f)) {
+			p = strrchr(line, '\n'); if (p) *p = 0;	//trim last newline
+			p = strchr(line, '|');
+			if (p) {
+				*p = 0;
+				strcpy_tolower(str_lower, p + 1); //printf("rom_name_lower: [%s]", str_lower);
+				if (strstr(str_lower, search)) {
+					char display_name[1000];
+					rom_name = p + 1;
+					p = strchr(rom_name, '|'); if (p) *p = ' ';	//replace | to space
+					gameid.push_back(std::to_string(n_sys)+line); //add first column to array gameid
+					snprintf(display_name, 1000, "[%s] %s", g_system[n_sys].id, rom_name);
+					l_dialog.addOption(display_name, n++, g_iconFileText);  //display second and third column
+				}
+			}
+		}
+		fclose(f);
+	}
+	l_dialog.addOption("Cancel", n, g_iconCancel);
+	action = l_dialog.execute();
+	} //end Dialog scope
+
+	if (action == n || action == -2) { // User click Cancel or BACK button (-2)
+		return;
+	}else{ // Display a "please wait" message
+		char cmd[3000];
+		char url[1000];
+		const char *p;
+		p = gameid[action].c_str();
+		n_sys = p[0] - '0';
+		p++;
+		Dialog dialogPleaseWait("Downloading");
+		dialogPleaseWait.addLabel("Please wait...");
+		dialogPleaseWait.render(true);
+		IWindow::renderPresent();
+		snprintf(url, 1000, g_system[n_sys].rom_url, p);
+		snprintf(cmd, 3000, "cd /userdata/roms/%s && wget %s", g_system[n_sys].id, url);
+		puts(cmd);
+		rc = system(cmd);
+		g_hasChanged = true;
+	}
+	if (rc){
+		Dialog l_dialog("Error:");
+		l_dialog.addLabel("Can not download rom. Check connection.");
+		l_dialog.addOption("Close", n, g_iconCancel);
+		l_dialog.execute();
+	}else{
+		Dialog l_dialog("Info:");
+		l_dialog.addLabel("ROM has been downloaded in");
+		l_dialog.addLabel(std::string("/userdata/roms/") + g_system[n_sys].id);
+		l_dialog.addLabel("Refresh: Main Menu -> Games Settings -> Update Games Lists");
+		l_dialog.addOption("Close", n, g_iconSelect);
+		l_dialog.execute();
+	}
+}
+
 void MainWindow::searchDirectory(void) {
 	int rc;
 	std::string cmd;
@@ -995,9 +1112,9 @@ void MainWindow::openMenu(void) {
 	l_dialog.addOption("Goto /userdata/roms", 104, g_iconDir);
 	l_dialog.addOption("Goto /userdata/system", 105, g_iconDir);
 	l_dialog.addOption("Search current directory", 300, g_iconDir);
-	l_dialog.addOption("Get SNES Rom", 200, g_iconImage);
-	l_dialog.addOption("Get Sega Genesis Rom", 201, g_iconImage);
-	l_dialog.addOption("Get Gameboy Advance Rom", 202, g_iconImage);
+	l_dialog.addOption("Download rom", 200, g_iconImage);
+	/*l_dialog.addOption("Get Sega Genesis Rom", 201, g_iconImage);
+	l_dialog.addOption("Get Gameboy Advance Rom", 202, g_iconImage);*/
 	//l_dialog.addOption("Quit", 999, g_iconQuit);	//Disable it. Use SELECT button to Quit from app.
 	result = l_dialog.execute();
 	} //end scope
@@ -1022,14 +1139,15 @@ void MainWindow::openMenu(void) {
 			gotoDir("/userdata/system", "");
 			break;
 		case 200:
-			getSNESRom();
+			//getSNESRom();
+			getRom();
 			break;
-		case 201:
+		/*case 201:
 			getSegaGenesisRom();
 			break;
 		case 202:
 			getGameboyAdvanceRom();
-			break;
+			break;*/
 		case 300:
 			searchDirectory();
 			break;
