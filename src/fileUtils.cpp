@@ -380,7 +380,8 @@ bool FileUtils::fileIsText(const std::string &p_path)
    while (fgets(buffer, sizeof(buffer), pipe) != NULL);
    pclose(pipe);
    line = buffer;
-   return (line.substr(0, 4) == "text" && line.find("charset=us-ascii") != std::string::npos);
+   //return (line.substr(0, 4) == "text" && line.find("charset=us-ascii") != std::string::npos);
+   return (line.substr(0, 4) == "text");
 }
 
 // Run command with or no args
