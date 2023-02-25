@@ -40,6 +40,45 @@ SDL_Texture *g_iconFileText = NULL;
 SDL_Texture *g_iconPlus = NULL;
 
 //------------------------------------------------------------------------------
+#define MAX_LINE_LENGTH 1024
+//Get Setting and don't forget to free the result
+//format:
+//key1=value1
+char *getConfig(const char *key, char *value){
+	FILE *f;
+	char line[MAX_LINE_LENGTH], *p;
+	std::string cfgPath = RES_PATH;
+
+	cfgPath += "/file_manager.cfg";
+	f = fopen(cfgPath.c_str(), "rt");
+	if (!f) return nullptr;
+	while (fgets(line, MAX_LINE_LENGTH, f) != NULL) {
+		if (line[0] == '#' || line[0] == '\n') continue;	// Ignore # and blank line
+		if (strncmp(key, line, strlen(key)) == 0){
+         p = strchr(line, '\n'); if (p) *p = 0; // ternyata ini penyakitttttt
+			p = strchr(line, '=');
+			if (p){
+				fclose(f);
+				return strcpy(value, p+1);
+			}
+		}
+	}
+	fclose(f);
+   return nullptr;
+}
+
+const char *setConfig(const char *key, const char *value){
+   FILE *f;
+	std::string cfgPath = RES_PATH;
+
+	cfgPath += "/file_manager.cfg";
+	f = fopen(cfgPath.c_str(), "w");
+	if (!f) return nullptr;
+	fprintf(f, "%s=%s\n", key, value);
+	fclose(f);
+   return key;
+}
+//------------------------------------------------------------------------------
 
 int main(int argc, char* args[])
 {
@@ -86,8 +125,12 @@ int main(int argc, char* args[])
 
    // Execute main window
    {
-      MainWindow mainWindow(START_PATH);
+      char start[1024];
+      strcpy(start, "/");
+      getConfig("last_path", start);
+      MainWindow mainWindow(start);
       mainWindow.execute();
+      setConfig("last_path",mainWindow.getTitle());
    }
 
    // Clean up font

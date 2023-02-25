@@ -39,6 +39,7 @@ class IWindow
 
    // Is window full screen?
    bool isFullScreen(void) const;
+   inline const char *getTitle() { return m_title.c_str(); }
 
    // Callbacks for virtual keyboard
    virtual void keyboardInputChar(const std::string &p_string) {};

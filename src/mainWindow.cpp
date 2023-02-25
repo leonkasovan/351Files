@@ -907,6 +907,7 @@ void MainWindow::getSNESRom() {
 	}
 }
 
+//NOT USED. Replaced by MainWindow::getROM
 void MainWindow::getSegaGenesisRom() {
 	char search[64], str_lower[1024], line[1024], *rom_name, *p;
 	FILE *f;
