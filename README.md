@@ -5,7 +5,8 @@ File Manager for Anbernic device RG353P based on SDL2
 1. `git clone https://github.com/leonkasovan/351Files.git`  
 2. `cd 351Files`  
 3. Build using make: `PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig" make`  
-4. Compress package: `7zz a FileManager.7z EnhancedFileManager FileManager/`  
+4. Compress package: `7zz a FileManager.7z EnhancedFileManager FileManager/`
+5. Or just run `./build.sh` to do step 3 and 4  
 
 ### Upload package to github  
 1. Go to https://github.com/leonkasovan/351Files/releases/edit/v202307  
@@ -13,6 +14,7 @@ File Manager for Anbernic device RG353P based on SDL2
 ### Manual Install on RG353P  
 1. copy binary `EnhanceFileManager` to `/userdata/roms/bin`  
 2. copy resource directory `res`  to `/userdata/roms/bin/FileManager`
+3. integrate in ES: `anbernic-settings-set run.filemanager.path /userdata/roms/bin/EnhancedFileManager`
 
 ### Install from github Release with bash script on RG353P
 ```bash
@@ -26,6 +28,7 @@ mv libmagic.so.1 /usr/lib/libmagic.so.1
 mkdir -p /usr/share/misc/
 mv magic.mgc /usr/share/misc/magic.mgc
 rm FileManager.7z
+anbernic-settings-set run.filemanager.path /userdata/roms/bin/EnhancedFileManager
 ```
 
 ### Full Emulation Station Installation include FileManager
