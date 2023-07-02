@@ -589,7 +589,6 @@ void MainWindow::openHighlightedFile(void) {
 		struct stat sfile; //pointer to stat struct
 		stat(filePath.c_str(), &sfile); //stat system call
 		strftime(tbuf, 2000, "Last modification: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_mtime))); l_dialog.addLabel(tbuf);
-		// strftime(tbuf, 2000, "Last access: %d-%m-%Y %H:%M:%S", localtime(&(sfile.st_atime))); l_dialog.addLabel(tbuf);
 		l_dialog.addLabel(" ");
         l_dialog.addOption("View as text", 1, g_iconFileText);
         l_dialog.addOption("Edit as text", 2, g_iconEdit);
