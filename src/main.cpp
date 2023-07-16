@@ -127,7 +127,11 @@ int main(int argc, char* args[])
    {
       char start[1024];
       strcpy(start, "/");
-      getConfig("last_path", start);
+      if (argc == 2){
+         strcpy(start, args[1]);
+      }else{
+         getConfig("last_path", start);
+      }
       MainWindow mainWindow(start);
       mainWindow.execute();
       setConfig("last_path",mainWindow.getTitle());
